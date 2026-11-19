@@ -1,0 +1,54 @@
+# GitHub Actions Continuous Integration (CI) Workflow
+# Purpose: Automatically runs ESLint, TypeScript type-checking, and Playwright tests on every push or pull request.
+# Used by: GitHub Actions runners whenever code is pushed to the 'main' branch.
+
+name: Playwright Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out repository code
+      - uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Step 3: Install exact npm dependencies from package-lock.json
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Install Chromium browser binary for headless test execution
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      # Step 5: Enforce code quality via ESLint and TypeScript compiler checks
+      - name: Run Lint & Typecheck
+        run: |
+          npm run lint
+          npm run typecheck
+
+      # Step 6: Execute Playwright test suite using encrypted GitHub Repository Secrets
+      - name: Run Playwright tests
+        env:
+          BASE_URL: https://www.hudl.com
+          HUDL_USERNAME: ${{ secrets.HUDL_USERNAME }}
+          HUDL_PASSWORD: ${{ secrets.HUDL_PASSWORD }}
+        run: npx playwright test --project=chromium
+
+      # Step 7: Upload the HTML test report as a downloadable artifact for debugging
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
