@@ -1,0 +1,18 @@
+# Environment variables (NEVER commit credentials)
+.env
+
+# Dependencies
+node_modules/
+
+# Playwright artifacts
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Build output
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
